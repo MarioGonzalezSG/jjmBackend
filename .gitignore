@@ -1,0 +1,14 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+local.properties
+
+# Configuración local
+src/main/resources/application-dev.yaml
+
+.env
+
