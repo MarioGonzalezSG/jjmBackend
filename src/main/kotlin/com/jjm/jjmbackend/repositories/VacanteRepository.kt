@@ -84,21 +84,18 @@ class VacanteRepository {
 
     fun update(id: Int, title: String?, description: String?, requirements: String?, slots: Int?,
                area: String?, duration: String?, schedule: String?, location: String?): Boolean {
-        transaction {
-            exec("""
-                UPDATE vacantes SET
-                    title = '$title',
-                    description = '$description',
-                    requirements = '$requirements',
-                    slots = $slots,
-                    area = '$area',
-                    duration = '$duration',
-                    schedule = '$schedule',
-                    location = '$location'
-                WHERE id = $id
-            """.trimIndent())
+        return transaction {
+            VacantesTable.update({ VacantesTable.id eq id }) { upd ->
+                title?.let { upd[VacantesTable.title] = it }
+                description?.let { upd[VacantesTable.description] = it }
+                requirements?.let { upd[VacantesTable.requirements] = it }
+                slots?.let { upd[VacantesTable.slots] = it }
+                area?.let { upd[VacantesTable.area] = it }
+                duration?.let { upd[VacantesTable.duration] = it }
+                schedule?.let { upd[VacantesTable.schedule] = it }
+                location?.let { upd[VacantesTable.location] = it }
+            } > 0
         }
-        return true
     }
 
     fun delete(id: Int): Boolean {

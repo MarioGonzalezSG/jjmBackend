@@ -14,8 +14,8 @@ class VacanteService(
     private val userRepository: UserRepository,
     private val companyRepository: CompanyRepository
 ) {
-    fun create(companyId: Int, request: VacanteRequest): Vacante? {
-        return vacanteRepository.create(
+    fun create(companyId: Int, request: VacanteRequest): VacanteResponse? {
+        val vacante = vacanteRepository.create(
             companyId = companyId,
             title = request.title,
             description = request.description,
@@ -26,6 +26,25 @@ class VacanteService(
             schedule = request.schedule,
             location = request.location,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        ) ?: return null
+        val user = userRepository.findById(companyId) ?: return null
+        val company = companyRepository.findByUserId(companyId)
+        return VacanteResponse(
+            id = vacante.id,
+            companyId = vacante.companyId,
+            companyName = user.name,
+            title = vacante.title,
+            description = vacante.description,
+            requirements = vacante.requirements,
+            slots = vacante.slots,
+            area = vacante.area,
+            duration = vacante.duration,
+            schedule = vacante.schedule,
+            location = vacante.location,
+            status = vacante.status,
+            createdAt = vacante.createdAt,
+            latitude = company?.latitude,
+            longitude = company?.longitude
         )
     }
 
@@ -56,8 +75,28 @@ class VacanteService(
         )
     }
 
-    fun getByCompany(companyId: Int): List<Vacante> {
-        return vacanteRepository.findByCompanyId(companyId)
+    fun getByCompany(companyId: Int): List<VacanteResponse> {
+        return vacanteRepository.findByCompanyId(companyId).map { vacante ->
+            val user = userRepository.findById(vacante.companyId)
+            val company = companyRepository.findByUserId(vacante.companyId)
+            VacanteResponse(
+                id = vacante.id,
+                companyId = vacante.companyId,
+                companyName = user?.name ?: "",
+                title = vacante.title,
+                description = vacante.description,
+                requirements = vacante.requirements,
+                slots = vacante.slots,
+                area = vacante.area,
+                duration = vacante.duration,
+                schedule = vacante.schedule,
+                location = vacante.location,
+                status = vacante.status,
+                createdAt = vacante.createdAt,
+                latitude = company?.latitude,
+                longitude = company?.longitude
+            )
+        }
     }
 
     fun update(id: Int, request: VacanteRequest): Boolean {
