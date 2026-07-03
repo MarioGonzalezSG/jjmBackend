@@ -13,8 +13,6 @@ class ServerTest {
         application {
             module()
         }
-        // verify health endpoint returns 200
         assertEquals(HttpStatusCode.OK, client.get("/health").status)
     }
-
 }

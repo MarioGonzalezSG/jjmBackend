@@ -3,60 +3,56 @@ package com.jjm.jjmbackend.services
 import com.jjm.jjmbackend.database.tables.UsersTable
 import com.jjm.jjmbackend.dto.LoginRequest
 import com.jjm.jjmbackend.dto.RegisterRequest
+import com.jjm.jjmbackend.dto.AuthResponse
+import com.jjm.jjmbackend.dto.UserDto
 import com.jjm.jjmbackend.models.User
 import com.jjm.jjmbackend.repositories.UserRepository
+import com.jjm.jjmbackend.repositories.CompanyRepository
 import org.mindrot.jbcrypt.BCrypt
 
 class AuthService(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val companyRepository: CompanyRepository
 ) {
-
-    // 🔹 REGISTRO
-    fun register(request: RegisterRequest): User? {
-
-        // 1. Verificar si el usuario ya existe
+    fun register(request: RegisterRequest): AuthResponse? {
         val existingUser = userRepository.findByEmailRaw(request.email)
+        if (existingUser != null) return null
 
-        if (existingUser != null) {
-            return null // email ya registrado
-        }
-
-        // 2. Hash seguro con BCrypt
-        val hashedPassword = hashPassword(request.password)
-
-        // 3. Crear usuario
-        return userRepository.create(
+        val hashedPassword = BCrypt.hashpw(request.password, BCrypt.gensalt(12))
+        val user = userRepository.create(
             email = request.email,
             password = hashedPassword,
-            name = request.name
+            name = request.name,
+            role = request.role
+        ) ?: return null
+
+        if (request.role == "EMPRESA") {
+            companyRepository.create(user.id)
+        }
+
+        val token = JwtService.generateToken(user.id, user.email, user.role)
+        return AuthResponse(
+            token = token,
+            user = UserDto(user.id, user.email, user.name, user.role)
         )
     }
 
-    // 🔹 LOGIN
-    fun login(request: LoginRequest): User? {
-
-        // 1. Buscar usuario en DB
-        val row = userRepository.findByEmailRaw(request.email)
-            ?: return null
-
+    fun login(request: LoginRequest): AuthResponse? {
+        val row = userRepository.findByEmailRaw(request.email) ?: return null
         val storedPassword = row[UsersTable.password]
 
-        // 2. Validar password
-        if (!verifyPassword(request.password, storedPassword)) {
-            return null
-        }
+        if (!BCrypt.checkpw(request.password, storedPassword)) return null
 
-        // 3. Retornar modelo limpio
-        return userRepository.findModelByEmail(request.email)
+        val user = userRepository.findModelByEmail(request.email) ?: return null
+
+        val token = JwtService.generateToken(user.id, user.email, user.role)
+        return AuthResponse(
+            token = token,
+            user = UserDto(user.id, user.email, user.name, user.role)
+        )
     }
 
-    // 🔹 HASH con BCrypt
-    private fun hashPassword(password: String): String {
-        return BCrypt.hashpw(password, BCrypt.gensalt(12))
-    }
-
-    // 🔹 VERIFICACIÓN con BCrypt
-    private fun verifyPassword(input: String, stored: String): Boolean {
-        return BCrypt.checkpw(input, stored)
+    fun getUserFromToken(userId: Int): User? {
+        return userRepository.findById(userId)
     }
 }

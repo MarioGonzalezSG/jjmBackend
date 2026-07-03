@@ -8,6 +8,7 @@ object UsersTable : Table("users") {
     val email = varchar("email", 255).uniqueIndex()
     val password = varchar("password", 255)
     val name = varchar("name", 100)
+    val role = varchar("role", 20) // ESTUDIANTE, EMPRESA, ADMINISTRADOR
 
     override val primaryKey = PrimaryKey(id)
 }
