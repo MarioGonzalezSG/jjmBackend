@@ -12,7 +12,8 @@ class VacanteRepository {
 
     fun create(
         companyId: Int, title: String, description: String, requirements: String?,
-        slots: Int, area: String?, duration: String?, schedule: String?, location: String?, createdAt: String
+        slots: Int, area: String?, duration: String?, schedule: String?, location: String?,
+        latitude: Double?, longitude: Double?, createdAt: String
     ): Vacante? {
         return transaction {
             VacantesTable.insert {
@@ -25,6 +26,8 @@ class VacanteRepository {
                 it[VacantesTable.duration] = duration
                 it[VacantesTable.schedule] = schedule
                 it[VacantesTable.location] = location
+                it[VacantesTable.latitude] = latitude
+                it[VacantesTable.longitude] = longitude
                 it[VacantesTable.createdAt] = createdAt
             }.resultedValues?.firstOrNull()?.let { mapRow(it) }
         }
@@ -42,7 +45,6 @@ class VacanteRepository {
         return transaction {
             val baseQuery = VacantesTable
                 .innerJoin(UsersTable, { VacantesTable.companyId }, { UsersTable.id })
-                .leftJoin(CompaniesTable, { VacantesTable.companyId }, { CompaniesTable.userId })
 
             var query = baseQuery.selectAll()
 
@@ -68,8 +70,8 @@ class VacanteRepository {
                     location = row[VacantesTable.location],
                     status = row[VacantesTable.status],
                     createdAt = row[VacantesTable.createdAt],
-                    latitude = row[CompaniesTable.latitude],
-                    longitude = row[CompaniesTable.longitude]
+                    latitude = row[VacantesTable.latitude],
+                    longitude = row[VacantesTable.longitude]
                 )
             }
         }
@@ -83,7 +85,8 @@ class VacanteRepository {
     }
 
     fun update(id: Int, title: String?, description: String?, requirements: String?, slots: Int?,
-               area: String?, duration: String?, schedule: String?, location: String?): Boolean {
+               area: String?, duration: String?, schedule: String?, location: String?,
+               latitude: Double?, longitude: Double?): Boolean {
         return transaction {
             VacantesTable.update({ VacantesTable.id eq id }) { upd ->
                 title?.let { upd[VacantesTable.title] = it }
@@ -94,6 +97,8 @@ class VacanteRepository {
                 duration?.let { upd[VacantesTable.duration] = it }
                 schedule?.let { upd[VacantesTable.schedule] = it }
                 location?.let { upd[VacantesTable.location] = it }
+                latitude?.let { upd[VacantesTable.latitude] = it }
+                longitude?.let { upd[VacantesTable.longitude] = it }
             } > 0
         }
     }
@@ -138,6 +143,8 @@ class VacanteRepository {
             duration = row[VacantesTable.duration],
             schedule = row[VacantesTable.schedule],
             location = row[VacantesTable.location],
+            latitude = row[VacantesTable.latitude],
+            longitude = row[VacantesTable.longitude],
             status = row[VacantesTable.status],
             createdAt = row[VacantesTable.createdAt]
         )

@@ -1,9 +1,7 @@
 package com.jjm.jjmbackend.routes
 
-import com.jjm.jjmbackend.dto.VacanteCreateResponse
 import com.jjm.jjmbackend.dto.VacanteRequest
 import com.jjm.jjmbackend.middleware.requireRole
-import com.jjm.jjmbackend.repositories.CompanyRepository
 import com.jjm.jjmbackend.repositories.UserRepository
 import com.jjm.jjmbackend.repositories.VacanteRepository
 import com.jjm.jjmbackend.services.VacanteService
@@ -15,7 +13,7 @@ import io.ktor.server.routing.*
 
 fun Route.vacanteRoutes() {
 
-    val vacanteService = VacanteService(VacanteRepository(), UserRepository(), CompanyRepository())
+    val vacanteService = VacanteService(VacanteRepository(), UserRepository())
 
     route("/vacantes") {
 
@@ -53,11 +51,7 @@ fun Route.vacanteRoutes() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al crear vacante"))
                 return@post
             }
-            val response = VacanteCreateResponse(
-                message = "Vacante creada exitosamente",
-                vacante = vacante
-            )
-            call.respond(HttpStatusCode.Created, response)
+            call.respond(HttpStatusCode.Created, vacante)
         }
 
         put("/{id}") {

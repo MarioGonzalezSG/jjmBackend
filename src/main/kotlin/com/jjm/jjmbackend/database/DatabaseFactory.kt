@@ -53,6 +53,11 @@ object DatabaseFactory {
                 exec("ALTER TABLE companies ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION")
                 exec("ALTER TABLE companies ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION")
             } catch (_: Exception) { }
+
+            try {
+                exec("ALTER TABLE vacantes ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION")
+                exec("ALTER TABLE vacantes ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION")
+            } catch (_: Exception) { }
         }
     }
 }

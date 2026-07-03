@@ -13,6 +13,8 @@ object VacantesTable : Table("vacantes") {
     val duration = varchar("duration", 100).nullable()
     val schedule = varchar("schedule", 200).nullable()
     val location = varchar("location", 255).nullable()
+    val latitude = double("latitude").nullable()
+    val longitude = double("longitude").nullable()
     val status = varchar("status", 20).default("ACTIVA") // ACTIVA, CERRADA
     val createdAt = varchar("created_at", 50)
 

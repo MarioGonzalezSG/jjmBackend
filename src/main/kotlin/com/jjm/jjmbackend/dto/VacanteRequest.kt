@@ -11,5 +11,7 @@ data class VacanteRequest(
     val area: String? = null,
     val duration: String? = null,
     val schedule: String? = null,
-    val location: String? = null
+    val location: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )

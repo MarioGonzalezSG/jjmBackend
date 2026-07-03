@@ -40,10 +40,7 @@ fun Route.postulacionRoutes() {
                 }
                 return@post
             }
-            call.respond(HttpStatusCode.Created, mapOf(
-                "message" to "Postulacion enviada exitosamente",
-                "postulacion" to postulacion
-            ))
+            call.respond(HttpStatusCode.Created, postulacion)
         }
 
         get("/mis-postulaciones") {

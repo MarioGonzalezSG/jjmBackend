@@ -1,7 +1,6 @@
 package com.jjm.jjmbackend.dto
 
 import kotlinx.serialization.Serializable
-import com.jjm.jjmbackend.models.Vacante
 
 @Serializable
 data class VacanteResponse(

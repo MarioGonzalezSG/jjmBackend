@@ -14,6 +14,8 @@ data class Vacante(
     val duration: String? = null,
     val schedule: String? = null,
     val location: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val status: String = "ACTIVA",
     val createdAt: String
 )
