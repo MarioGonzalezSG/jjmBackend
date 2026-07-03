@@ -15,5 +15,6 @@ fun Application.configureRouting() {
         documentRoutes()
         attendanceRoutes()
         chatRoutes()
+        notificationRoutes()
     }
 }
