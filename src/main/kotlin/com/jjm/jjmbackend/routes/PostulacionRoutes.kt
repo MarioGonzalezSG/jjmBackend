@@ -97,17 +97,17 @@ fun Route.postulacionRoutes() {
                 return@put
             }
             val updated = postulacionService.updateStatus(id, request.status)
-            if (!updated) {
+            if (updated == null) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al actualizar estado"))
                 return@put
             }
-            val statusMsg = when (request.status) {
-                "ACEPTADA" -> "aceptada"
-                "RECHAZADA" -> "rechazada"
-                "PENDIENTE" -> "puesta en espera"
-                else -> request.status
-            }
-            call.respond(HttpStatusCode.OK, mapOf("message" to "Postulacion $statusMsg correctamente"))
+            call.respond(HttpStatusCode.OK, updated)
+        }
+
+        get("/empresa") {
+            val user = requireRole(call, "EMPRESA")
+            val postulaciones = postulacionService.getAllByCompany(user.userId)
+            call.respond(HttpStatusCode.OK, postulaciones)
         }
 
         get("/mis-estudiantes") {

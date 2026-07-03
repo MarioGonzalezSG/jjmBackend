@@ -39,17 +39,19 @@ class PostulacionService(
         return postulacionRepository.findByVacante(vacanteId)
     }
 
-    fun updateStatus(id: Int, status: String): Boolean {
+    fun updateStatus(id: Int, status: String): PostulacionResponse? {
         val postulacion = postulacionRepository.findById(id)
-        if (postulacion == null) return false
+        if (postulacion == null) return null
 
-        val updated = postulacionRepository.updateStatus(id, status)
-        if (updated) {
-            val vacante = vacanteRepository.findById(postulacion.vacanteId)
-            val vacanteTitle = vacante?.title ?: "Vacante"
-            notificationService.notifyStudentOnStatusChange(postulacion.studentId, vacanteTitle, status)
-        }
+        val updated = postulacionRepository.updateStatus(id, status) ?: return null
+        val vacante = vacanteRepository.findById(postulacion.vacanteId)
+        val vacanteTitle = vacante?.title ?: "Vacante"
+        notificationService.notifyStudentOnStatusChange(postulacion.studentId, vacanteTitle, status)
         return updated
+    }
+
+    fun getAllByCompany(companyId: Int): List<PostulacionResponse> {
+        return postulacionRepository.findAllByCompany(companyId)
     }
 
     fun getAcceptedByCompany(companyId: Int): List<PostulacionResponse> {

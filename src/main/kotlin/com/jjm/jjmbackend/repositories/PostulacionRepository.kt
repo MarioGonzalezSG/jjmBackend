@@ -48,11 +48,17 @@ class PostulacionRepository {
         }
     }
 
-    fun updateStatus(id: Int, status: String): Boolean {
+    fun updateStatus(id: Int, status: String): PostulacionResponse? {
         return transaction {
             PostulacionesTable.update({ PostulacionesTable.id eq id }) {
                 it[PostulacionesTable.status] = status
-            } > 0
+            }
+            (PostulacionesTable
+                .innerJoin(UsersTable, { PostulacionesTable.studentId }, { UsersTable.id })
+                .innerJoin(VacantesTable, { PostulacionesTable.vacanteId }, { VacantesTable.id }))
+                .select { PostulacionesTable.id eq id }
+                .mapNotNull { mapToResponse(it) }
+                .singleOrNull()
         }
     }
 
@@ -69,6 +75,16 @@ class PostulacionRepository {
             PostulacionesTable.select {
                 (PostulacionesTable.studentId eq studentId) and (PostulacionesTable.vacanteId eq vacanteId)
             }.mapNotNull { mapRow(it) }.singleOrNull()
+        }
+    }
+
+    fun findAllByCompany(companyId: Int): List<PostulacionResponse> {
+        return transaction {
+            (PostulacionesTable
+                .innerJoin(UsersTable, { PostulacionesTable.studentId }, { UsersTable.id })
+                .innerJoin(VacantesTable, { PostulacionesTable.vacanteId }, { VacantesTable.id }))
+                .select { VacantesTable.companyId eq companyId }
+                .map { mapToResponse(it) }
         }
     }
 
