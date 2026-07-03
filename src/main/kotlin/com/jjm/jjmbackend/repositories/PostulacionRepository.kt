@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 class PostulacionRepository {
 
-    fun create(studentId: Int, vacanteId: Int, message: String?, createdAt: String): Postulacion? {
+    fun create(studentId: Int, vacanteId: Int, message: String?, createdAt: String): PostulacionResponse? {
         return transaction {
             val insert = PostulacionesTable.insert {
                 it[PostulacionesTable.studentId] = studentId
@@ -18,7 +18,13 @@ class PostulacionRepository {
                 it[PostulacionesTable.message] = message
                 it[PostulacionesTable.createdAt] = createdAt
             }
-            insert.resultedValues?.firstOrNull()?.let { mapRow(it) }
+            val id = insert.resultedValues?.firstOrNull()?.get(PostulacionesTable.id) ?: return@transaction null
+            (PostulacionesTable
+                .innerJoin(UsersTable, { PostulacionesTable.studentId }, { UsersTable.id })
+                .innerJoin(VacantesTable, { PostulacionesTable.vacanteId }, { VacantesTable.id }))
+                .select { PostulacionesTable.id eq id }
+                .mapNotNull { mapToResponse(it) }
+                .singleOrNull()
         }
     }
 

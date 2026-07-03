@@ -2,7 +2,6 @@ package com.jjm.jjmbackend.services
 
 import com.jjm.jjmbackend.dto.PostulacionRequest
 import com.jjm.jjmbackend.dto.PostulacionResponse
-import com.jjm.jjmbackend.models.Postulacion
 import com.jjm.jjmbackend.repositories.PostulacionRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -10,7 +9,7 @@ import java.time.format.DateTimeFormatter
 class PostulacionService(
     private val postulacionRepository: PostulacionRepository
 ) {
-    fun apply(studentId: Int, request: PostulacionRequest): Postulacion? {
+    fun apply(studentId: Int, request: PostulacionRequest): PostulacionResponse? {
         return postulacionRepository.create(
             studentId = studentId,
             vacanteId = request.vacanteId,
