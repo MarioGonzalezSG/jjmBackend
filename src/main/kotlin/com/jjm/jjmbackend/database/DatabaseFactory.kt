@@ -36,7 +36,8 @@ object DatabaseFactory {
                 PostulacionesTable,
                 DocumentsTable,
                 AttendanceTable,
-                ChatMessagesTable
+                ChatMessagesTable,
+                NotificationsTable
             )
 
             // Migrar columnas faltantes en tablas existentes
