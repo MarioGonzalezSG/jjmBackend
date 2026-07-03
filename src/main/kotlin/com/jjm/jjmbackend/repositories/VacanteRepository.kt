@@ -98,6 +98,27 @@ class VacanteRepository {
         }
     }
 
+    fun findAllActive(): List<Vacante> {
+        return transaction {
+            VacantesTable.select { VacantesTable.status eq "ACTIVA" }
+                .mapNotNull { mapRow(it) }
+        }
+    }
+
+    fun updateStatus(id: Int, status: String): Boolean {
+        return transaction {
+            VacantesTable.update({ VacantesTable.id eq id }) {
+                it[VacantesTable.status] = status
+            } > 0
+        }
+    }
+
+    fun countActive(): Int {
+        return transaction {
+            VacantesTable.select { VacantesTable.status eq "ACTIVA" }.count().toInt()
+        }
+    }
+
     fun delete(id: Int): Boolean {
         transaction {
             exec("DELETE FROM vacantes WHERE id = $id")

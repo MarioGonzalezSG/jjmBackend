@@ -2,6 +2,11 @@ package com.jjm.jjmbackend
 
 import com.jjm.jjmbackend.config.configureSerialization
 import com.jjm.jjmbackend.database.DatabaseFactory
+import com.jjm.jjmbackend.repositories.NotificationRepository
+import com.jjm.jjmbackend.repositories.UserRepository
+import com.jjm.jjmbackend.repositories.VacanteRepository
+import com.jjm.jjmbackend.services.BackgroundTaskService
+import com.jjm.jjmbackend.services.NotificationService
 import io.ktor.server.application.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.http.*
@@ -23,4 +28,13 @@ fun Application.module() {
 
     configureSerialization()
     configureRouting()
+
+    val notificationService = NotificationService(NotificationRepository(), UserRepository(), VacanteRepository())
+    val backgroundTaskService = BackgroundTaskService(
+        application = this,
+        vacanteRepository = VacanteRepository(),
+        notificationRepository = NotificationRepository(),
+        notificationService = notificationService
+    )
+    backgroundTaskService.start()
 }

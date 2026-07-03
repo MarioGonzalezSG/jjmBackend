@@ -64,6 +64,14 @@ class PostulacionRepository {
         }
     }
 
+    fun findByStudentAndVacante(studentId: Int, vacanteId: Int): Postulacion? {
+        return transaction {
+            PostulacionesTable.select {
+                (PostulacionesTable.studentId eq studentId) and (PostulacionesTable.vacanteId eq vacanteId)
+            }.mapNotNull { mapRow(it) }.singleOrNull()
+        }
+    }
+
     fun findAcceptedByCompany(companyId: Int): List<PostulacionResponse> {
         return transaction {
             (PostulacionesTable

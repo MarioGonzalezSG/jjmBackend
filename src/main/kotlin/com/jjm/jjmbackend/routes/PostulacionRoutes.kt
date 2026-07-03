@@ -3,7 +3,11 @@ package com.jjm.jjmbackend.routes
 import com.jjm.jjmbackend.dto.PostulacionRequest
 import com.jjm.jjmbackend.dto.PostulacionStatusRequest
 import com.jjm.jjmbackend.middleware.requireRole
+import com.jjm.jjmbackend.repositories.NotificationRepository
 import com.jjm.jjmbackend.repositories.PostulacionRepository
+import com.jjm.jjmbackend.repositories.UserRepository
+import com.jjm.jjmbackend.repositories.VacanteRepository
+import com.jjm.jjmbackend.services.NotificationService
 import com.jjm.jjmbackend.services.PostulacionService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -13,7 +17,8 @@ import io.ktor.server.routing.*
 
 fun Route.postulacionRoutes() {
 
-    val postulacionService = PostulacionService(PostulacionRepository())
+    val notificationService = NotificationService(NotificationRepository(), UserRepository(), VacanteRepository())
+    val postulacionService = PostulacionService(PostulacionRepository(), VacanteRepository(), notificationService)
 
     route("/postulaciones") {
 
@@ -27,10 +32,18 @@ fun Route.postulacionRoutes() {
             }
             val postulacion = postulacionService.apply(user.userId, request)
             if (postulacion == null) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al postular"))
+                val yaPostulado = PostulacionRepository().findByStudentAndVacante(user.userId, request.vacanteId)
+                if (yaPostulado != null) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to "Ya te has postulado a esta vacante anteriormente"))
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al postular"))
+                }
                 return@post
             }
-            call.respond(HttpStatusCode.Created, postulacion)
+            call.respond(HttpStatusCode.Created, mapOf(
+                "message" to "Postulacion enviada exitosamente",
+                "postulacion" to postulacion
+            ))
         }
 
         get("/mis-postulaciones") {
@@ -40,10 +53,19 @@ fun Route.postulacionRoutes() {
         }
 
         get("/vacante/{vacanteId}") {
-            requireRole(call, "EMPRESA")
+            val user = requireRole(call, "EMPRESA")
             val vacanteId = call.parameters["vacanteId"]?.toIntOrNull()
             if (vacanteId == null) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID invalido"))
+                return@get
+            }
+            val vacante = VacanteRepository().findById(vacanteId)
+            if (vacante == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Vacante no encontrada"))
+                return@get
+            }
+            if (vacante.companyId != user.userId) {
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Esta vacante no te pertenece"))
                 return@get
             }
             val postulaciones = postulacionService.getByVacante(vacanteId)
@@ -51,7 +73,7 @@ fun Route.postulacionRoutes() {
         }
 
         put("/{id}/status") {
-            requireRole(call, "EMPRESA")
+            val user = requireRole(call, "EMPRESA")
             val id = call.parameters["id"]?.toIntOrNull()
             if (id == null) {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID invalido"))
@@ -63,16 +85,32 @@ fun Route.postulacionRoutes() {
                 call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Cuerpo de solicitud invalido"))
                 return@put
             }
-            if (request.status !in listOf("ACEPTADA", "RECHAZADA")) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Estado invalido"))
+            if (request.status !in listOf("ACEPTADA", "RECHAZADA", "PENDIENTE")) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Estado invalido. Use: ACEPTADA, RECHAZADA, PENDIENTE"))
+                return@put
+            }
+            val postulacion = PostulacionRepository().findById(id)
+            if (postulacion == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Postulacion no encontrada"))
+                return@put
+            }
+            val vacante = VacanteRepository().findById(postulacion.vacanteId)
+            if (vacante == null || vacante.companyId != user.userId) {
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "No tienes permiso para modificar esta postulacion"))
                 return@put
             }
             val updated = postulacionService.updateStatus(id, request.status)
             if (!updated) {
-                call.respond(HttpStatusCode.NotFound, mapOf("error" to "Postulacion no encontrada"))
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al actualizar estado"))
                 return@put
             }
-            call.respond(HttpStatusCode.OK, mapOf("message" to "Estado actualizado"))
+            val statusMsg = when (request.status) {
+                "ACEPTADA" -> "aceptada"
+                "RECHAZADA" -> "rechazada"
+                "PENDIENTE" -> "puesta en espera"
+                else -> request.status
+            }
+            call.respond(HttpStatusCode.OK, mapOf("message" to "Postulacion $statusMsg correctamente"))
         }
 
         get("/mis-estudiantes") {

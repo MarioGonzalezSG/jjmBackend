@@ -1,5 +1,6 @@
 package com.jjm.jjmbackend.routes
 
+import com.jjm.jjmbackend.dto.VacanteCreateResponse
 import com.jjm.jjmbackend.dto.VacanteRequest
 import com.jjm.jjmbackend.middleware.requireRole
 import com.jjm.jjmbackend.repositories.CompanyRepository
@@ -52,7 +53,11 @@ fun Route.vacanteRoutes() {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al crear vacante"))
                 return@post
             }
-            call.respond(HttpStatusCode.Created, vacante)
+            val response = VacanteCreateResponse(
+                message = "Vacante creada exitosamente",
+                vacante = vacante
+            )
+            call.respond(HttpStatusCode.Created, response)
         }
 
         put("/{id}") {
